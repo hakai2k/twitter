@@ -1,10 +1,9 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import createHttpError, { isHttpError } from "http-errors";
-import authRouter from "./routes/auth.routes.js";
-import userRouter from "./routes/user.routes.js";
-import postRouter from "./routes/post.routes.js";
+import authRouter from "./routes/auth.routes";
+import userRouter from "./routes/user.routes";
 
 const app = express();
 
@@ -15,12 +14,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
-app.use("/api/post", postRouter);
 
 app.use((req, res, next) => {
-  throw createHttpError(404, "Endpoint not found.");
+  throw createHttpError(404, "Endpoint not found");
 });
-app.use((err, req, res, next) => {
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
   let message = "An error has occurred. Internal server error.";
   let status = 500;
   if (isHttpError(err)) {
@@ -29,5 +27,4 @@ app.use((err, req, res, next) => {
   }
   res.status(status).json({ ErrorMessage: message });
 });
-
 export default app;
