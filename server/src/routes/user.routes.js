@@ -5,7 +5,8 @@ import { authProtected } from "../middlewares/authProtected.js";
 const userRouter = express.Router();
 
 userRouter.get("/profile", authProtected, userController.profile);
-userRouter.get("/follow/:fid", authProtected, userController.followUnfollow);
 userRouter.get("/suggested", authProtected, userController.suggested);
+userRouter.post("/follow/:fid", authProtected, userController.followUnfollow);
+userRouter.post("/update", authProtected, userController.updateProfile);
 
 export default userRouter;
