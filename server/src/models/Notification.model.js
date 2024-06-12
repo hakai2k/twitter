@@ -5,7 +5,7 @@ const NotificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: [true, "Title is required for notification"],
-      enum: ["follow", "unfollow", "like", "comment"],
+      enum: ["follow", "like", "comment"],
     },
     from: {
       type: mongoose.Schema.Types.ObjectId,

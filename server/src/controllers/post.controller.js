@@ -1,5 +1,6 @@
 import PostModel from "../models/Post.model.js";
 import NotificationModel from "../models/Notification.model.js";
+import UserModel from "../models/User.model.js";
 import createHttpError from "http-errors";
 import { v2 as cloudinary } from "cloudinary";
 import { isValidObjectId } from "mongoose";
@@ -120,11 +121,13 @@ export const like = async (req, res, next) => {
     const userLikedPost = post.likes.includes(uid);
     if (userLikedPost) {
       await PostModel.findByIdAndUpdate(postId, { $pull: { likes: uid } });
+      await UserModel.findByIdAndUpdate(uid, { $pull: { likedPosts: postId } });
 
       res.status(200).json({ Message: "Post unliked successfully" });
     } else {
       post.likes.push(uid);
       await post.save();
+      await UserModel.findByIdAndUpdate(uid, { $push: { likedPosts: postId } });
 
       const likedPostNotification = await NotificationModel.create({
         from: uid,
@@ -140,7 +143,7 @@ export const like = async (req, res, next) => {
 
       res.status(200).json({
         Message: "Post liked successfully",
-        likedPostNotification,
+        Notification: likedPostNotification,
         post,
       });
     }
@@ -162,6 +165,27 @@ export const getAllPosts = async (req, res, next) => {
     }
 
     res.status(200).json(allPosts);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getLikedPosts = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw createHttpError(404, "Error while fetching the user details.");
+    }
+
+    const likedPosts = await PostModel.find({ _id: { $in: user.likedPosts } })
+      .populate({
+        path: "user",
+      })
+      .populate({
+        path: "comments.user",
+      });
+
+    res.status(200).json(likedPosts);
   } catch (error) {
     next(error);
   }

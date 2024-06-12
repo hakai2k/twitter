@@ -115,7 +115,7 @@ export const updateProfile = async (req, res, next) => {
 
     const uid = req.user._id;
 
-    let user = await UserModel.findById(uid);
+    let user = await UserModel.findById(uid).select("+password");
     if (!user) {
       throw createHttpError(404, "User not found.");
     }
