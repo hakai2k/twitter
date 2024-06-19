@@ -190,3 +190,49 @@ export const getLikedPosts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getFollowingPosts = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const following = user.following;
+
+    const feedPosts = await PostModel.find({ user: { $in: following } })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "user",
+      })
+      .populate({
+        path: "comments.user",
+      });
+
+    res.status(200).json(feedPosts);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+export const getUserPosts = async (req, res, next) => {
+  try {
+    const username = req.params.username;
+
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      throw createHttpError(404, "user does not exist.");
+    }
+
+    const posts = await PostModel.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "user",
+      })
+      .populate({
+        path: "comments.user",
+      });
+
+    res.status(200).json(posts);
+  } catch (error) {
+    next(error);
+  }
+};
