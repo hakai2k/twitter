@@ -1,10 +1,11 @@
-import UserModel from "../models/User.model.js";
-import { genToken } from "../utils/genToken.js";
+import UserModel from "../models/User.model";
+import { genToken } from "../utils/genToken";
 import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import { isValidObjectId } from "mongoose";
+import { RequestHandler } from "express";
 
-export const me = async (req, res, next) => {
+export const me: RequestHandler = async (req, res, next) => {
   const uid = req.user._id;
 
   if (!isValidObjectId(uid)) {
@@ -22,7 +23,18 @@ export const me = async (req, res, next) => {
   res.status(200).json(user);
 };
 
-export const signup = async (req, res, next) => {
+interface IF_SignupBody {
+  username?: string;
+  fullName?: string;
+  email?: string;
+  password?: string;
+}
+export const signup: RequestHandler<
+  unknown,
+  unknown,
+  IF_SignupBody,
+  unknown
+> = async (req, res, next) => {
   try {
     const { username, fullName, email, password } = req.body;
     if (!username || !fullName || !email || !password) {
@@ -71,7 +83,16 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+interface IF_LoginBody {
+  username?: string;
+  password?: string;
+}
+export const login: RequestHandler<
+  unknown,
+  unknown,
+  IF_LoginBody,
+  unknown
+> = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -84,7 +105,6 @@ export const login = async (req, res, next) => {
     if (!user) {
       throw createHttpError(404, "Invalid credentials. User does not exist.");
     }
-
     const isPasswordMatching = await bcrypt.compare(password, user.password);
     if (!isPasswordMatching) {
       throw createHttpError(400, "Invalid login credentials.");
@@ -99,7 +119,7 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const logout = async (req, res, next) => {
+export const logout: RequestHandler = async (req, res, next) => {
   try {
     res.cookie("jwt", "", { maxAge: 0 });
 

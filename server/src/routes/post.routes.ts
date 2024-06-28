@@ -1,6 +1,6 @@
 import express from "express";
-import * as postController from "../controllers/post.controller.js";
-import { authProtected } from "../middlewares/authProtected.js";
+import * as postController from "../controllers/post.controllers";
+import { authProtected } from "../middlewares/authProtected";
 
 const postRouter = express.Router();
 

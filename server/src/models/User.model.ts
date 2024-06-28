@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-export type UserSchemaType = {
+type UserSchemaType = {
   _id: mongoose.Schema.Types.ObjectId;
   createdAt: string;
   updatedAt: string;
@@ -10,12 +10,12 @@ export type UserSchemaType = {
   password: string;
   followers: mongoose.Schema.Types.ObjectId[];
   following: mongoose.Schema.Types.ObjectId[];
-  bio?: string;
-  link?: string;
+  bio: string;
+  link: string;
   profileImg: string;
   coverImg: string;
+  likedPosts: mongoose.Schema.Types.ObjectId[];
 };
-
 const UserSchema = new mongoose.Schema<UserSchemaType>(
   {
     fullName: {
@@ -69,6 +69,13 @@ const UserSchema = new mongoose.Schema<UserSchemaType>(
       type: String,
       default: "",
     },
+    likedPosts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "post",
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );

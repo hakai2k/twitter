@@ -1,17 +1,18 @@
 import createHttpError from "http-errors";
-import env from "../utils/validateEnv.js";
-import jwt from "jsonwebtoken";
+import env from "../utils/validateEnv";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { isValidObjectId } from "mongoose";
-import UserModel from "../models/User.model.js";
+import UserModel from "../models/User.model";
+import { RequestHandler } from "express";
 
-export const authProtected = async (req, res, next) => {
+export const authProtected: RequestHandler = async (req, res, next) => {
   try {
     const token = req.cookies.jwt;
     if (!token) {
       throw createHttpError(400, "Unauthorized: No token found.");
     }
 
-    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
     const uid = decoded.uid;
 
     if (!isValidObjectId(uid)) {

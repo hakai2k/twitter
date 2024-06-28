@@ -1,11 +1,21 @@
-import PostModel from "../models/Post.model.js";
-import NotificationModel from "../models/Notification.model.js";
-import UserModel from "../models/User.model.js";
+import PostModel, { IF_UserType } from "../models/Post.model";
+import NotificationModel from "../models/Notification.model";
+import UserModel from "../models/User.model";
 import createHttpError from "http-errors";
 import { v2 as cloudinary } from "cloudinary";
-import { isValidObjectId } from "mongoose";
+import { Types, isValidObjectId } from "mongoose";
+import { RequestHandler } from "express";
 
-export const createPost = async (req, res, next) => {
+interface IF_CreatePostBody {
+  text?: string;
+  img?: string;
+}
+export const createPost: RequestHandler<
+  unknown,
+  unknown,
+  IF_CreatePostBody,
+  unknown
+> = async (req, res, next) => {
   try {
     const text = req.body.text;
     let img = req.body.img;
@@ -41,7 +51,7 @@ export const createPost = async (req, res, next) => {
   }
 };
 
-export const deletePost = async (req, res, next) => {
+export const deletePost: RequestHandler = async (req, res, next) => {
   try {
     const { postId } = req.params;
     if (!isValidObjectId(postId)) {
@@ -56,13 +66,18 @@ export const deletePost = async (req, res, next) => {
     if (post.user.toString() !== req.user._id.toString()) {
       throw createHttpError(
         400,
-        "Unauthorized: You are not authrorized to delete this post."
+        "Unauthorized: You are not authorized to delete this post."
       );
     }
 
     if (post.img) {
-      const imgId = post.img.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(imgId);
+      const imgIdParts = post.img.split("/");
+      const imgId =
+        imgIdParts.length > 0 ? imgIdParts.pop()?.split(".")[0] : undefined;
+
+      if (imgId) {
+        await cloudinary.uploader.destroy(imgId);
+      }
     }
 
     const deletedPost = await PostModel.findByIdAndDelete(postId);
@@ -76,11 +91,22 @@ export const deletePost = async (req, res, next) => {
   }
 };
 
-export const comment = async (req, res, next) => {
+interface IF_CommentBody {
+  text?: string;
+}
+interface IF_CommentParams {
+  postId?: Types.ObjectId;
+}
+export const comment: RequestHandler<
+  IF_CommentParams,
+  unknown,
+  IF_CommentBody,
+  unknown
+> = async (req, res, next) => {
   try {
     const { text } = req.body;
     const uid = req.user._id;
-    const postId = req.params.postId;
+    const { postId } = req.params;
     if (!text) {
       throw createHttpError(
         400,
@@ -108,12 +134,12 @@ export const comment = async (req, res, next) => {
   }
 };
 
-export const like = async (req, res, next) => {
+export const like: RequestHandler = async (req, res, next) => {
   try {
     const uid = req.user._id;
     const postId = req.params.postId;
 
-    const post = await PostModel.findById(postId);
+    const post = await PostModel.findById(postId).populate("user");
     if (!post) {
       throw createHttpError(404, "Post not found");
     }
@@ -131,7 +157,7 @@ export const like = async (req, res, next) => {
 
       const likedPostNotification = await NotificationModel.create({
         from: uid,
-        to: post.user._id,
+        to: (post.user as IF_UserType)._id, // Type assertion here
         type: "like",
       });
       if (!likedPostNotification) {
@@ -152,7 +178,7 @@ export const like = async (req, res, next) => {
   }
 };
 
-export const getAllPosts = async (req, res, next) => {
+export const getAllPosts: RequestHandler = async (req, res, next) => {
   try {
     const allPosts = await PostModel.find({})
       .sort({ createdAt: -1 })
@@ -170,7 +196,7 @@ export const getAllPosts = async (req, res, next) => {
   }
 };
 
-export const getLikedPosts = async (req, res, next) => {
+export const getLikedPosts: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -191,7 +217,7 @@ export const getLikedPosts = async (req, res, next) => {
   }
 };
 
-export const getFollowingPosts = async (req, res, next) => {
+export const getFollowingPosts: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
 
@@ -213,9 +239,9 @@ export const getFollowingPosts = async (req, res, next) => {
   }
 };
 
-export const getUserPosts = async (req, res, next) => {
+export const getUserPosts: RequestHandler = async (req, res, next) => {
   try {
-    const username = req.params.username;
+    const { username } = req.params;
 
     const user = await UserModel.findOne({ username });
     if (!user) {

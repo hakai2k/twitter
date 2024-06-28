@@ -1,21 +1,25 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
-type IFComments = {
+export type IF_UserType = {
+  _id: mongoose.Schema.Types.ObjectId;
+  // Add other user fields if necessary
+};
+
+type IF_CommentsType = {
   text: string;
   user: mongoose.Schema.Types.ObjectId;
 };
 
 type PostSchemaType = {
-  user: mongoose.Schema.Types.ObjectId;
-  text?: string;
-  img?: string;
-  likes?: mongoose.Schema.Types.ObjectId[];
-  comments?: IFComments[];
   _id: mongoose.Schema.Types.ObjectId;
   createdAt: string;
   updatedAt: string;
+  user: mongoose.Schema.Types.ObjectId | IF_UserType; // Adjusted to account for populated user
+  text?: string;
+  img?: string;
+  likes: mongoose.Schema.Types.ObjectId[];
+  comments: IF_CommentsType[];
 };
-
 const PostSchema = new mongoose.Schema<PostSchemaType>(
   {
     user: {

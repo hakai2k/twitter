@@ -1,11 +1,12 @@
 import createHttpError from "http-errors";
 import { v2 as cloudinary } from "cloudinary";
-import UserModel from "../models/User.model.js";
-import NotificationModel from "../models/Notification.model.js";
-import { isValidObjectId } from "mongoose";
+import UserModel from "../models/User.model";
+import NotificationModel from "../models/Notification.model";
+import { Types, isValidObjectId } from "mongoose";
 import bcrypt from "bcrypt";
+import { RequestHandler } from "express";
 
-export const profile = async (req, res, next) => {
+export const profile: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
     res.status(200).json(user);
@@ -14,7 +15,15 @@ export const profile = async (req, res, next) => {
   }
 };
 
-export const followUnfollow = async (req, res, next) => {
+interface IF_FollowUnfollowParams {
+  fid?: Types.ObjectId;
+}
+export const followUnfollow: RequestHandler<
+  IF_FollowUnfollowParams,
+  unknown,
+  unknown,
+  unknown
+> = async (req, res, next) => {
   try {
     const { fid } = req.params;
     if (!isValidObjectId(fid)) {
@@ -75,7 +84,7 @@ export const followUnfollow = async (req, res, next) => {
   }
 };
 
-export const suggested = async (req, res, next) => {
+export const suggested: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
     const users = await UserModel.aggregate([
@@ -100,7 +109,23 @@ export const suggested = async (req, res, next) => {
   }
 };
 
-export const updateProfile = async (req, res, next) => {
+interface IF_UpdateProfileBody {
+  fullName?: string;
+  email?: string;
+  username?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  bio?: string;
+  link?: string;
+  profileImg?: string;
+  coverImg?: string;
+}
+export const updateProfile: RequestHandler<
+  unknown,
+  unknown,
+  IF_UpdateProfileBody,
+  unknown
+> = async (req, res, next) => {
   try {
     const {
       fullName,
@@ -130,7 +155,7 @@ export const updateProfile = async (req, res, next) => {
       );
     }
 
-    if (currentPassword && newPassword) {
+    if (currentPassword && newPassword && user.password) {
       const isPasswordMatching = await bcrypt.compare(
         currentPassword,
         user.password
@@ -152,9 +177,10 @@ export const updateProfile = async (req, res, next) => {
 
     if (profileImg) {
       if (user.profileImg) {
-        await cloudinary.uploader.destroy(
-          user.profileImg.split("/").pop().split(".")[0]
-        );
+        const profileImgId = user.profileImg.split("/").pop()?.split(".")[0];
+        if (profileImgId) {
+          await cloudinary.uploader.destroy(profileImgId);
+        }
       }
       const uploadedProfileImgResponse = await cloudinary.uploader.upload(
         profileImg
@@ -164,9 +190,10 @@ export const updateProfile = async (req, res, next) => {
 
     if (coverImg) {
       if (user.coverImg) {
-        await cloudinary.uploader.destroy(
-          user.coverImg.split("/").pop().split(".")[0]
-        );
+        const coverImgId = user.coverImg.split("/").pop()?.split(".")[0];
+        if (coverImgId) {
+          await cloudinary.uploader.destroy(coverImgId);
+        }
       }
       const uploadedCoverImgResponse = await cloudinary.uploader.upload(
         coverImg
@@ -190,9 +217,9 @@ export const updateProfile = async (req, res, next) => {
       );
     }
 
-    user.password = null;
+    const { password, ...userResponse } = user.toObject();
 
-    res.status(200).json(user);
+    res.status(200).json(userResponse);
   } catch (error) {
     console.log(error);
     next(error);

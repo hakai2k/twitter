@@ -1,10 +1,10 @@
-import * as authController from "../controllers/auth.controller";
-import { authProtectedRoute } from "../middlewares/authProtectedRoute";
 import express from "express";
+import * as authController from "../controllers/auth.controllers";
+import { authProtected } from "../middlewares/authProtected";
 
 const authRouter = express.Router();
 
-authRouter.get("/me", authProtectedRoute, authController.me);
+authRouter.get("/me", authProtected, authController.me);
 authRouter.post("/signup", authController.signup);
 authRouter.post("/login", authController.login);
 authRouter.post("/logout", authController.logout);

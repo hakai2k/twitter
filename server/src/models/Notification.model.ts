@@ -4,24 +4,23 @@ type NotificationSchemaType = {
   _id: mongoose.Schema.Types.ObjectId;
   createdAt: string;
   updatedAt: string;
-  to: mongoose.Schema.Types.ObjectId;
+  type: "follow" | "like" | "comment";
   from: mongoose.Schema.Types.ObjectId;
-  type: string;
+  to: mongoose.Schema.Types.ObjectId;
   read: boolean;
 };
-
 const NotificationSchema = new mongoose.Schema<NotificationSchemaType>(
   {
     type: {
       type: String,
-      required: [true, "Title is required for notification."],
+      required: [true, "Title is required for notification"],
       enum: ["follow", "like", "comment"],
     },
-    to: {
+    from: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
     },
-    from: {
+    to: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
     },
